@@ -4,7 +4,7 @@ DECLARE
         SELECT p.REGNO, 
                (SELECT MODEL FROM CAR WHERE REGNO = p.REGNO) AS MODEL,
                COUNT(*) AS accident_count, 
-               SUM(p.DAMAGE_AMOUNT) AS total_damage
+               SUM(p.DAMAGE_AMT) AS total_damage
         FROM PARTICIPATED p
         GROUP BY p.REGNO
         HAVING COUNT(*) > 1

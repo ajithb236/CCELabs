@@ -1,4 +1,4 @@
-ALTER TABLE ACCIDENT ADD total_damage INT DEFAULT 0;
+
 SET SERVEROUTPUT ON;
 
 
@@ -8,11 +8,11 @@ FOR EACH ROW
 BEGIN
   IF INSERTING THEN
     UPDATE ACCIDENT
-    SET total_damage = total_damage + :NEW.damage_amount
+    SET total_damage = total_damage + :NEW.damage_amt
     WHERE report_number = :NEW.report_number;
   ELSIF DELETING THEN
     UPDATE ACCIDENT
-    SET total_damage = total_damage - :OLD.damage_amount
+    SET total_damage = total_damage - :OLD.damage_amt
     WHERE report_number = :OLD.report_number;
   END IF;
 END;
