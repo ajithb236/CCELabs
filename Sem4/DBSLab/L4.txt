@@ -1,0 +1,53 @@
+1)Find the total number of people who owned cars that were involved in accidents in 2008
+
+SQL> select count(distinct p.driver_id) from participated p,accident a where p.report_number=a.report_number and EXTRACT(YEAR FROM a.accd_date) = 2008;
+
+COUNT(DISTINCTP.DRIVER_ID)
+--------------------------
+                         0
+2)Find the number of accidents in which cars belonging to a specific model were involved.
+
+SQL> select c.model, count(*) as Count from accident a,participated p,car c where a.report_number = p.report_number and c.regno = p.regno group by c.model;
+
+MODEL                     COUNT
+-------------------- ----------
+Ford Focus                    1
+Toyota Corolla                1
+Chevrolet Malibu              1
+Honda Civic                   1
+Hyundai Elantra               1
+
+
+3)Produce a listing with header as OWNER_NAME, No. of Accidents, and Total Damage Amount in a descending order on total damage.
+
+SQL> select p.name as OWNER_NAME,count(distinct par.report_number) as "No. of Accidents",sum(par.damage_amt) as "Total Damage" from person p,participated par where par.driver_id = p.driver_id group by p.name order by sum(par.damage_amt) desc;
+
+OWNER_NAME           No. of Accidents Total Damage
+-------------------- ---------------- ------------
+Bob Brown                           1         2500
+Charlie Davis                       1         2200
+Jane Smith                          1         2000
+Alice Johnson                       1         1800
+John Doe                            1         1500
+
+4)
+
+
+SQL> select p.name from person p,accident a,participated par where p.driver_id=par.driver_id and a.report_number=par.report_number group by p.driver_id,p.name,EXTRACT(year from a.accd_date) having count(distinct par.report_number)=1;
+
+NAME
+--------------------
+Bob Brown
+Charlie Davis
+Alice Johnson
+Jane Smith
+John Doe
+
+5. List the owners who are not involved in any accident.
+
+
+SQL> select p.name from person p where p.driver_id in (select p1.driver_id from person p1 MINUS select par.driver_id from participated par);
+
+NAME
+--------------------
+AXB

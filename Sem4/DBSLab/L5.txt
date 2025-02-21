@@ -1,0 +1,221 @@
+1)Create the above tables by properly specifying the primary keys and the
+foreign keys.
+
+-- Create STUDENT table
+CREATE TABLE STUDENT (
+    regno VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(20),
+    major VARCHAR(20),
+    bdate DATE
+);
+
+-- Create COURSE table
+CREATE TABLE COURSE (
+    course INT PRIMARY KEY,
+    cname VARCHAR(20),
+    dept VARCHAR(30)
+);
+
+-- Create ENROLL table with foreign keys referencing STUDENT and COURSE
+CREATE TABLE ENROLL (
+    regno VARCHAR(20),
+    course INT,
+    PRIMARY KEY (regno, course),
+    FOREIGN KEY (regno) REFERENCES STUDENT(regno),
+    FOREIGN KEY (course) REFERENCES COURSE(course)
+);
+
+-- Create TEXT table
+CREATE TABLE TEXT (
+    book_isbn INT PRIMARY KEY,
+    booktitle VARCHAR(20),
+    publisher VARCHAR(20),
+    author VARCHAR(20)
+);
+
+-- Create BOOK_ADOPTION table with foreign keys referencing COURSE and TEXT
+CREATE TABLE BOOK_ADOPTION (
+    course INT,
+    sem INT,
+    book_isbn INT,
+    PRIMARY KEY (course, sem, book_isbn),
+    FOREIGN KEY (course) REFERENCES COURSE(course) ,
+    FOREIGN KEY (book_isbn) REFERENCES TEXT(book_isbn)
+);
+
+
+
+2) Data for all tables
+->Student table
+INSERT INTO STUDENT (regno, name, major, bdate) VALUES ('S001', 'Alice', 'CS', TO_DATE('2003-05-12', 'YYYY-MM-DD'));
+INSERT INTO STUDENT (regno, name, major, bdate) VALUES ('S002', 'Bob', 'IT', TO_DATE('2002-11-23', 'YYYY-MM-DD'));
+INSERT INTO STUDENT (regno, name, major, bdate) VALUES ('S003', 'Charlie', 'ECE', TO_DATE('2001-09-15', 'YYYY-MM-DD'));
+INSERT INTO STUDENT (regno, name, major, bdate) VALUES ('S004', 'David', 'ME', TO_DATE('2000-06-05', 'YYYY-MM-DD'));
+INSERT INTO STUDENT (regno, name, major, bdate) VALUES ('S005', 'Eve', 'CS', TO_DATE('2003-08-18', 'YYYY-MM-DD'));
+
+->Course Table
+INSERT INTO COURSE (course, cname, dept) VALUES (101, 'Database Systems', 'CS');
+INSERT INTO COURSE (course, cname, dept) VALUES (102, 'Operating Systems', 'CS');
+INSERT INTO COURSE (course, cname, dept) VALUES (103, 'Networks', 'IT');
+INSERT INTO COURSE (course, cname, dept) VALUES (104, 'Digital Logic', 'ECE');
+INSERT INTO COURSE (course, cname, dept) VALUES (105, 'Thermodynamics', 'ME');
+insert into course values(106,'SDT','IT');
+
+->Enroll table
+INSERT INTO ENROLL (regno, course) VALUES ('S001', 101);
+INSERT INTO ENROLL (regno, course) VALUES ('S002', 102);
+INSERT INTO ENROLL (regno, course) VALUES ('S003', 103);
+INSERT INTO ENROLL (regno, course) VALUES ('S004', 104);
+INSERT INTO ENROLL (regno, course) VALUES ('S005', 105);
+insert into enroll values('S001',102);
+insert into enroll values('S001',105);
+
+->text table
+
+INSERT INTO TEXT (book_isbn, booktitle, publisher, author) VALUES (2001, 'DB Fundamentals', 'Pearson', 'John Doe');
+INSERT INTO TEXT (book_isbn, booktitle, publisher, author) VALUES (2002, 'OS Principles', 'McGraw Hill', 'Jane Smith');
+INSERT INTO TEXT (book_isbn, booktitle, publisher, author) VALUES (2003, 'Networking Basics', 'Cisco Press', 'Mark Lee');
+INSERT INTO TEXT (book_isbn, booktitle, publisher, author) VALUES (2004, 'Digital Circuits', 'Oxford', 'Emily Clark');
+INSERT INTO TEXT (book_isbn, booktitle, publisher, author) VALUES (2005, 'Heat Transfer', 'Springer', 'Robert Brown');
+
+->Book adoption table
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (101, 1, 2001);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (102, 2, 2002);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (103, 3, 2003);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (104, 4, 2004);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (105, 5, 2005);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (101, 1, 2002);
+INSERT INTO BOOK_ADOPTION (course, sem, book_isbn) VALUES (102, 2, 2004);
+
+
+3) Queries
+i)List the courses which uses more than 1 text book
+
+SQL> select C.course,C.cname from course C where C.course in (select B.course from book_adoption B where C.course = B.course group by B.course having count(B.book_isbn)>1);
+
+    COURSE CNAME
+---------- --------------------
+       101 Database Systems
+       102 Operating Systems
+
+ii) . List the departments whose all course text books are published by a
+particular publisher.
+
+SQL> select C.dept Departments from course C where C.dept in (select C1.dept from course C1,book_adoption B,text T where C.course=B.course and B.book_isbn=T.book_isbn group by C1.dept having count(unique T.publisher)=1);
+
+DEPARTMENTS
+------------------------------
+IT
+ECE
+ME
+
+
+iii)Find the students who have enrolled for course of more than one department
+
+SQL> select S.name,S.regno from student S where S.regno IN (select S1.regno from student S1,enroll e,course c where s1.regno=e.regno and e.course=c.course group by e.regno having count(unique dept)>1);
+
+NAME                 REGNO
+-------------------- --------------------
+Alice                S001
+
+
+iv) Produce a list of students who are not enrolled
+
+SQL> select S.name from student S where not exists (select * from enroll E where S.regno = E.regno);
+
+NAME
+--------------------
+Ben Dover
+
+v)List the books which are adopted by the course as well as enrolled by the student.
+
+SQL> select t.booktitle from text t where t.book_isbn in (select b1.book_isbn from book_adoption b1 where b1.course in (select e.course from enroll e));
+
+BOOKTITLE
+--------------------
+DB Fundamentals
+OS Principles
+Networking Basics
+Digital Circuits
+Heat Transfer
+
+vi)List the courses which has adapted at least two books from a specific publisher
+
+SQL> select c.course,c.cname from course c where c.course in (select c1.course from course c1,book_adoption b,text t where b.course = c1.course and t.book_isbn=b.book_isbn group by c1.course having count(distinct t.publisher)>=2);
+
+    COURSE CNAME
+---------- --------------------
+       101 Database Systems
+       102 Operating Systems
+
+
+vii)Identify the students who are enrolled for maximum number of books
+SQL> select s.name from student s,enroll e,book_adoption b where e.course = b.course and s.regno=e.regno group by s.regno,s.name having count(b.book_isbn) = (select max(book_count) from (select e.regno,count(b.book_isbn) as book_count from enroll e,book_adoption b where e.course=b.course group by e.regno));
+
+NAME
+--------------------
+Alice
+
+viii)List the publishers along with the number of books published by them
+
+SQL> select t.publisher,count(t.book_isbn) as book_count from text t group by t.publisher;
+
+PUBLISHER            BOOK_COUNT
+-------------------- ----------
+Springer                      1
+Cisco Press                   1
+McGraw Hill                   1
+Pearson                       1
+Oxford                        1
+
+ix)
+
+SQL> select S.name,S.regno from student S where not exists(select b.course from book_adoption b where not exists(select e.course from enroll e where e.regno=s.regno and e.course=b.course));
+
+SQL> select S.name,S.regno from student S where not exists(select e.course from enroll e where e.regno=s.regno and not exists(select * from book_adoption b where b.course = e.course));
+
+NAME                 REGNO
+-------------------- --------------------
+Alice                S001
+Bob                  S002
+Charlie              S003
+David                S004
+Eve                  S005
+
+x) Prev question ix with views
+
+SQL> CREATE VIEW ENROLLED_COURSES_WITH_BOOKS AS
+  2  SELECT E.regno, E.course
+  3  FROM ENROLL E
+  4  WHERE EXISTS (
+  5      SELECT 1 FROM BOOK_ADOPTION B WHERE B.course = E.course
+  6  );
+
+View created.
+
+SQL> SELECT S.name, S.regno
+  2  FROM STUDENT S
+  3  WHERE NOT EXISTS (
+  4      -- Find at least one enrolled course that is missing from the view
+  5      SELECT E.course
+  6      FROM ENROLL E
+  7      WHERE E.regno = S.regno
+  8      AND NOT EXISTS (
+  9          SELECT 1 FROM ENROLLED_COURSES_WITH_BOOKS V
+ 10          WHERE V.regno = E.regno AND V.course = E.course
+ 11      )
+ 12  );
+
+NAME                 REGNO
+-------------------- --------------------
+Alice                S001
+Bob                  S002
+Charlie              S003
+David                S004
+Eve                  S005
+
+
+
+
+
+

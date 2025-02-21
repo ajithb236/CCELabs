@@ -1,0 +1,22 @@
+INSURANCE DB
+-----------
+PERSON (driver_id#: varchar(30), name: varchar(50),
+address:varchar(100)
+CAR (regno: varchar(20), model: varchar(30), Year:int)
+ACCIDENT (report_number: int, accd_date: date, location:
+varchar(50))
+OWNS (driver_id#: varchar(30), regno: varchar(20))
+PARTICIPATED (driver_id#: varchar(30), regno: varchar(20), report_number:
+int, damage_amount: int)
+-----------------------------------------------------------------------------
+STUDENT DB
+--------
+
+STUDENT (regno: varchar(20), name: varchar(50), major: varchar(20),
+bdate:date)
+COURSE (course#:int, cname: varchar(30), dept: varchar(30))
+ENROLL  (regno: varchar(20), course#:int)
+BOOK_ADOPTION (course#:int, sem:int, book_isbn:int)
+TEXT (book_isbn:int, booktitle: varchar(50), publisher: varchar(50), author:
+varchar(50))
+---------------------------------------------------------
